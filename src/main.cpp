@@ -12,6 +12,10 @@ struct {
     unsigned int offset;
 } buffer;
 
+CRGB color(unsigned int, unsigned int) {
+    return CRGB(0, 5, 0);
+}
+
 /**
  * Reads and evaluates the input from bluetooth
  */
@@ -33,6 +37,7 @@ void setup() {
 
     espBT.begin( "LED HAT" );
     LEDHat::Instance().setup();
+    LEDHat::Instance().setColorProvider( color );
 }
 
 void loop() {

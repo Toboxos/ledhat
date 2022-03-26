@@ -1,11 +1,14 @@
 #pragma once
 #include <FastLED.h>
+#include <functional>
 
 #include "characters.h"
 
 class LEDHat
 {
 public:
+    using ColorProvider = std::function<CRGB(unsigned int row, unsigned int col)>;
+
     /**
      * Singleton instance function
      *
@@ -22,6 +25,13 @@ public:
      * Clears the the led matrix
      */
     void clear();
+
+    /**
+     * Sets a color provider
+     *
+     * A color provider gets the row and column of a pixel which is drawn and returns the color of the pixel
+     */
+    void setColorProvider( const ColorProvider& colorProvider ) { _colorProvider = colorProvider; }
 
     /**
      * Prints the given character at given position. Wrap around automatically.
@@ -93,9 +103,9 @@ private:
     int coordinateToIndex(int row, int col);
 
     /**
-     * Brightness of the leds. Value between 0 - 255
+     * Callback providing the color for a pixel
      */
-    unsigned int _brightness = 10;
+    ColorProvider _colorProvider;
 
     /**
      * Total number of leds of the led matrix

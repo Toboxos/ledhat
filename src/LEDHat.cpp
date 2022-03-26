@@ -6,8 +6,10 @@ LEDHat &LEDHat::Instance()
     return instance;
 }
 
-void LEDHat::setup() {
-    FastLED.addLeds<NEOPIXEL, PIN>( _ledBuffer, NUM_LEDS );
+void LEDHat::setup()
+{
+    FastLED.addLeds<NEOPIXEL, PIN>(_ledBuffer, NUM_LEDS);
+    _colorProvider = [](unsigned int, unsigned int) -> CRGB { return CRGB(10, 0, 0); }; // Default color provider will return red
 }
 
 void LEDHat::indexToCoordinate(unsigned int idx, unsigned int &row, unsigned int &col)
@@ -64,9 +66,15 @@ void LEDHat::drawCharacter(const Character &c, int row, int col, int maxWrapArou
             }
 
             auto idx = coordinateToIndex(row + y, fixedCol);
-            _ledBuffer[idx].red = _brightness * (c.data[y * c.width + x] - '0');
-            _ledBuffer[idx].green = 0;
-            _ledBuffer[idx].blue = 0;
+
+            if (c.data[y * c.width + x] - '0')
+            {
+                _ledBuffer[idx] = _colorProvider(row + y, fixedCol);
+            }
+            else
+            {
+                _ledBuffer[idx] = CRGB(0, 0, 0);
+            }
         }
     }
 }
@@ -93,7 +101,7 @@ void LEDHat::drawText(const char *text, int offsetX /*= 0*/, int offsetY /*= 0*/
             drawCharacter(c, offsetY, offsetX, 0); // No wrap around is allowed
         }
 
-        offsetX += c.width + 1;
+        offsetX += c.width;
     }
 }
 
@@ -111,7 +119,7 @@ void LEDHat::scrollText(const char *text, unsigned int duration)
             continue;
         }
 
-        stringDisplaySize += c.width + 1;
+        stringDisplaySize += c.width;
     }
 
     // Start printing the text at last column without wrap around.
