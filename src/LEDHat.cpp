@@ -48,9 +48,9 @@ void LEDHat::clear()
 
 void LEDHat::drawCharacter(const Character &c, int row, int col, int maxWrapAround /*= 0*/)
 {
-    for (auto y = 0; y < c.height; ++y)
+    for (auto x = 0; x < c.width; ++x)
     {
-        for (auto x = 0; x < c.width; ++x)
+        for (auto y = 0; y < c.height; ++y)
         {
             auto fixedCol = (col + x) % COLS; // column after wrap around
 
