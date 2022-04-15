@@ -3,6 +3,7 @@
 
 #include "CommandParser.h"
 #include "LEDHat.h"
+#include "LuaScripting.h"
 
 BluetoothSerial espBT;
 CommandParser cmdParser;
@@ -26,6 +27,9 @@ void logBT(const std::string& msg) {
     espBT.write('\n');
 }
 
+void logSerial(const std::string& msg) {
+    Serial.write( msg.c_str() );
+}
 
 /**
  * Showing text when /text command is used
@@ -86,6 +90,7 @@ void setColor(const std::string& color) {
 
 void setup() {
     espBT.begin( "LED HAT" );
+    Serial.begin( 115200 );
 
     LEDHat::Instance().setup();
     LEDHat::Instance().setColorProvider( color );
@@ -94,6 +99,23 @@ void setup() {
     cmdParser.addCommandHandler( "color", setColor );
     cmdParser.addCommandHandler( "speed", setSpeed );
     cmdParser.setLogger( logBT );
+
+
+    LuaScripting::init();
+    LuaScripting::setLogger( logSerial );
+    LuaScripting::execute(" \
+        function fibonacci(n) \
+            a, b = 0, 1 \
+            \
+            for i = 1, n do \
+                print( 'a=', a, ' b=', b ) \
+                a, b = b, a + b \
+            end \
+            return a \
+        end \
+        \
+        fibonacci(3) \
+    ");
 }
 
 std::string cmdBuffer;
