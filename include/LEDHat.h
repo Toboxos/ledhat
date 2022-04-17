@@ -81,6 +81,28 @@ public:
      */
     void scrollText(const char *text, unsigned int duration);
 
+    /**
+     * Sets the color of given pixel
+     * 
+     * @param[in] y y-Position of pixel
+     * @param[in] x x-Position of pixel
+     * @param[in] color Color of the pixel in RGB
+     */
+    void setPixel(int y, int x, CRGB color);
+
+    /**
+     * Gets the current color of given pixel
+     * 
+     * @param[in] y y-Position of pixel
+     * @param[in] x x-Position of pixel
+     */
+    CRGB getPixel(int y, int x);
+
+    /**
+     * Shows the pixels on th LEDHat
+     */
+    void show();
+
 private:
     LEDHat() = default;
 

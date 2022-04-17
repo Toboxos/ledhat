@@ -132,3 +132,19 @@ void LEDHat::scrollText(const char *text, unsigned int duration)
         delay(duration);
     }
 }
+
+void LEDHat::setPixel(int y, int x, CRGB color) {
+   auto idx = coordinateToIndex(y, x);
+
+   _ledBuffer[idx] = color; 
+}
+
+CRGB LEDHat::getPixel(int y, int x ) {
+   auto idx = coordinateToIndex(y, x);
+
+   return _ledBuffer[idx];
+}
+
+void LEDHat::show() {
+    FastLED.show();
+}
