@@ -12,7 +12,6 @@
 class CommandParser {
 public:
     using CommandHandler = std::function<void(const std::string&)>;
-    using Logger = std::function<void(const std::string&)>;
 
     /**
      * Parses the given text for commands and arguments & call eventually registered command handlers
@@ -29,13 +28,6 @@ public:
      */
     void addCommandHandler(const std::string& command, const CommandHandler& handler) { _handlers.insert( {command, handler} ); }
 
-    /**
-     * Sets the logger to which logging message are dispatched
-     *
-     * @param[in] logger
-     */
-    void setLogger(const Logger& logger) { _logger = logger; }
-
 private:
     void callHandler(const std::string& command, const std::string& arg);
 
@@ -43,6 +35,4 @@ private:
      * Map with relation of command the corresponding handler
      */
     std::map<const std::string, CommandHandler> _handlers;
-
-    Logger _logger;
 };

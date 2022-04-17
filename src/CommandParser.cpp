@@ -1,10 +1,12 @@
 #include "CommandParser.h"
+#include "IO.h"
 
 void CommandParser::parseCommand(const std::string& text) {
-    _logger("Parsing: " + text);
+    IO::write("Parsing: " + text);
+    IO::write('\n');
 
     if( text.size() == 0 || text[0] != '/' ) {
-        _logger("Not in command format!");
+        IO::write("Not in command format!");
         return;
     }
 
@@ -18,7 +20,8 @@ void CommandParser::parseCommand(const std::string& text) {
 }
 
 void CommandParser::callHandler(const std::string& command, const std::string& arg) {
-    _logger("Command: '" + command + "' Arg: '" + arg + "'");
+    IO::write("Command: '" + command + "' Arg: '" + arg + "'");
+    IO::write('\n');
     auto handler = _handlers.find( command );
     if( handler == _handlers.end() ) {
         return;

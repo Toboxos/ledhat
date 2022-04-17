@@ -1,9 +1,12 @@
 #include <Arduino.h>
 #include <BluetoothSerial.h>
+#include <SPIFFS.h>
 
 #include "CommandParser.h"
+#include "IO.h"
 #include "LEDHat.h"
 #include "LuaScripting.h"
+
 
 BluetoothSerial espBT;
 CommandParser cmdParser;
@@ -17,18 +20,6 @@ int gScrollSpeed = 40;
  */
 CRGB color(unsigned int, unsigned int) {
     return gColor;
-}
-
-/**
- * Callback for logging message via bluetooth
- */
-void logBT(const std::string& msg) {
-    espBT.write( (uint8_t*) msg.c_str(), msg.size() );
-    espBT.write('\n');
-}
-
-void logSerial(const std::string& msg) {
-    Serial.write( msg.c_str() );
 }
 
 /**
@@ -88,40 +79,27 @@ void setColor(const std::string& color) {
     gColor.blue = (fromHex(color[4]) << 16) + fromHex(color[5]);
 }
 
-void setup() {
-    espBT.begin( "LED HAT" );
-    Serial.begin( 115200 );
+void execute(const std::string& code) {
+    LuaScripting::execute( code );
+}
 
+void setup() {
+    IO::init();
     LEDHat::Instance().setup();
     LEDHat::Instance().setColorProvider( color );
 
     cmdParser.addCommandHandler( "text", showText );
     cmdParser.addCommandHandler( "color", setColor );
     cmdParser.addCommandHandler( "speed", setSpeed );
-    cmdParser.setLogger( logBT );
-
+    cmdParser.addCommandHandler( "execute", execute );
 
     LuaScripting::init();
-    LuaScripting::setLogger( logSerial );
-    LuaScripting::execute(" \
-        function fibonacci(n) \
-            a, b = 0, 1 \
-            \
-            for i = 1, n do \
-                print( 'a=', a, ' b=', b ) \
-                a, b = b, a + b \
-            end \
-            return a \
-        end \
-        \
-        fibonacci(3) \
-    ");
 }
 
 std::string cmdBuffer;
 void loop() {
-    while( espBT.available() ) {
-        char c = espBT.read();
+    while( IO::available() ) {
+        char c = IO::read();
         if( c == '\n' ) {
             cmdParser.parseCommand( cmdBuffer );
             cmdBuffer = "";
