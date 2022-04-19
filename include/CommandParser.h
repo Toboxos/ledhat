@@ -18,7 +18,7 @@ public:
      *
      * @param[in] text The text which shoule be parsed
      */
-    void parseCommand(const std::string& text);
+    bool parseCommand(const std::string& text);
 
     /**
      * Adds a command handler for a specific command. The handler will be called later when the command is used.

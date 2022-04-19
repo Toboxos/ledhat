@@ -8,7 +8,7 @@
 #include "LuaScripting.h"
 
 
-BluetoothSerial espBT;
+File file;
 CommandParser cmdParser;
 
 CRGB gColor(0, 5, 0);
@@ -83,25 +83,83 @@ void execute(const std::string& code) {
     LuaScripting::execute( code );
 }
 
+void uploadFile(const std::string& filename) {
+    file = SPIFFS.open( ("/" + filename).c_str(), FILE_WRITE );
+    if( !file ) {
+        IO::write( "Failed to open file!\n" );
+        return;
+    }
+    IO::write("Content will be written to " + filename + "\n");
+}
+
+void closeFile(const std::string& _) {
+    file.close();
+    IO::write("Filed closed!");
+}
+
+void loadFile(const std::string& filename) {
+    file = SPIFFS.open( ("/" + filename).c_str() );
+    if( !file ) {
+        IO::write( "Failed to open file!\n" );
+        return;
+    }
+
+    std::string code;
+    while( file.available() ) {
+        code += file.readString().c_str();
+    }
+
+    file.close();
+    LuaScripting::execute( code );
+}
+
+void dumpFile(const std::string& filename) {
+    file = SPIFFS.open( ("/" + filename).c_str() );
+    if( !file ) {
+        IO::write( "Failed to open file!\n" );
+        return;
+    }
+
+    std::string code;
+    while( file.available() ) {
+        code += file.readString().c_str();
+    }
+
+    file.close();
+    IO::write(code);
+    IO::write('\n');
+}
+
 void setup() {
     IO::init();
     LEDHat::Instance().setup();
     LEDHat::Instance().setColorProvider( color );
 
+    SPIFFS.begin( true );
+
     cmdParser.addCommandHandler( "text", showText );
     cmdParser.addCommandHandler( "color", setColor );
     cmdParser.addCommandHandler( "speed", setSpeed );
     cmdParser.addCommandHandler( "execute", execute );
+    cmdParser.addCommandHandler( "upload", uploadFile );
+    cmdParser.addCommandHandler( "close", closeFile );
+    cmdParser.addCommandHandler( "load", loadFile );
+    cmdParser.addCommandHandler( "dump", dumpFile );
 
     LuaScripting::init();
 }
 
 std::string cmdBuffer;
+
 void loop() {
     while( IO::available() ) {
         char c = IO::read();
+
         if( c == '\n' ) {
-            cmdParser.parseCommand( cmdBuffer );
+            if( !cmdParser.parseCommand( cmdBuffer ) && file ) {
+                file.print( cmdBuffer.c_str() );
+                file.print("\n");
+            }
             cmdBuffer = "";
         } else if( c != '\r' ) {
            cmdBuffer += c;
