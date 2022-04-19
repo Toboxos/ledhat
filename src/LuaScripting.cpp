@@ -16,9 +16,6 @@ namespace LuaScripting {
      */
     static lua_State* L = nullptr;
 
-    void log(const std::string& msg);
-    void log(int value);
-
     struct Row {
         static int get(lua_State* L) {
             const auto col = luaL_checkinteger(L, 2);
@@ -95,33 +92,21 @@ namespace LuaScripting {
         }
     };
 
-
-    void log(const std::string& msg) {
-        IO::write( msg );
-    }
-
-    void log(int number) {
-        std::stringstream ss;
-        ss << number;
-
-        log( ss.str() );
-    }
-
     int lua_print(lua_State* L) {
         int nargs = lua_gettop(L);
 
         for( auto i = 1; i <= nargs; ++i ) {
 
-            log( lua_tostring(L, i) );
-            log(" ");
+            IO::write( lua_tostring(L, i) );
+            IO::write(" ");
         }
 
-        log( "\n" );
+        IO::write( "\n" );
         return 1;
     }
 
     int lua_panic(lua_State* L) {
-        log("Lua error");
+        IO::write("Lua error");
         return 0;
     }
 

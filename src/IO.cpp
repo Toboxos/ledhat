@@ -11,12 +11,8 @@ namespace IO {
         Serial.begin( 115200 );
     }
 
-    void write( const char c ) {
-        espBT.write( c );
-        Serial.write( c );
-    }
-
-    void write( const std::string& msg ) {
+    template <>
+    void write<std::string>( const std::string& msg ) {
         espBT.write( (const uint8_t*) msg.c_str(), msg.size() );
         Serial.write( (const uint8_t*) msg.c_str(), msg.size() );
     }

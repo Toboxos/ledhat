@@ -1,23 +1,31 @@
 #include <string>
+#include <sstream>
 
 namespace IO {
 
     /**
      * Initializes theIO system
-     * 
+     *
      * Sets up the serial & bluetooth serial connections
      */
     void init();
 
-     /**
-     *  Writes a single char to the serial connection
+    /**
+     * Writes the given variable to the serial connection
      */
-    void write(const char msg);
+    template <typename T>
+    void write(const T& value) {
+        std::stringstream ss;
+        ss << value;
+
+        write<std::string>( ss.str() );
+    }
 
     /**
-     *  Writes a message to the serial connection
+     *  Writes a string to the serial connection
      */
-    void write(const std::string& msg);
+    template <>
+    void write<std::string>(const std::string& msg);
 
     /**
      * Returns the number of bytes available to read from the serial connection
