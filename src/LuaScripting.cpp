@@ -27,8 +27,6 @@ namespace LuaScripting {
             lua_Integer row = luaL_checkinteger(L, -1);
             lua_pop(L, 1);
 
-            log("[DEBUG] LEDHat get row="); log(row); log( "col="); log(col); log("\n");
-
             auto pixel = LEDHat::Instance().getPixel(row - 1, col - 1);
 
             lua_createtable(L, 0, 0); // -4
@@ -61,10 +59,6 @@ namespace LuaScripting {
 
             lua_pop(L, 3);
 
-            log("[DEBUG] LEDHat set row="); log(row); log( "col="); log(col);
-            log(" r="); log(r); log( " g="); log(g); log(" b="); log(b); log("\n");
-
-
             LEDHat::Instance().setPixel(row - 1, col - 1, CRGB(r, g, b) );
             return 0;
         }
@@ -76,7 +70,6 @@ namespace LuaScripting {
             
             // set row attribute
             lua_Number row = luaL_checknumber(L, 2);
-            log("[DEBUG] LEDHat get row="); log(row); log("\n");
 
             lua_pushnumber(L, row);
             lua_setfield(L, -2, "row");
@@ -97,7 +90,6 @@ namespace LuaScripting {
         }
 
         static int show(lua_State* L) {
-            log("[DEBUG] LEDHat show");
             LEDHat::Instance().show();
         }
     };
