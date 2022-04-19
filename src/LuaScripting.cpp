@@ -91,6 +91,7 @@ namespace LuaScripting {
 
         static int show(lua_State* L) {
             LEDHat::Instance().show();
+            return 0;
         }
     };
 
@@ -124,6 +125,11 @@ namespace LuaScripting {
         return 0;
     }
 
+    int lua_millis(lua_State* L) {
+        lua_pushnumber(L, millis());
+        return 1;
+    }
+
     void init() {
         L = luaL_newstate();
         luaL_openlibs(L);
@@ -137,11 +143,17 @@ namespace LuaScripting {
         lua_pushcfunction(L, Matrix::show);
         lua_setfield(L, -2, "show");
 
-        // create Matrix metatable
-        lua_createtable(L, 0, 0);
-        lua_pushcfunction(L, Matrix::index);
-        lua_setfield(L, -2, "__index");
-        lua_setmetatable(L, -2);
+        lua_pushcfunction(L, lua_millis);
+        lua_setfield(L, -2, "millis");
+
+        // create a raw object for every led matrix row
+        for( auto i = 1; i <= 8; ++i ) {
+            lua_pushnumber(L, i);
+            Matrix::index( L );
+            lua_rawseti(L, 1, i);
+            lua_pop(L, 1);
+        }
+
         lua_setglobal(L, "LEDHat");
     }
 
@@ -151,6 +163,10 @@ namespace LuaScripting {
                 // If it was executed successfuly we 
                 // remove the code from the stack
                 lua_pop(L, lua_gettop(L));
+            } else {
+                IO::write( "Error: " );
+                IO::write( lua_tolstring(L, -1, NULL) );
+                IO::write('\n');
             }
         }
     }
