@@ -16,6 +16,11 @@ namespace LuaScripting {
      */
     static lua_State* L = nullptr;
 
+    /**
+     * Current lua thread
+     */
+    static lua_State* T = nullptr;
+
     struct Row {
         static int get(lua_State* L) {
             const auto col = luaL_checkinteger(L, 2);
@@ -62,7 +67,7 @@ namespace LuaScripting {
     };
 
     struct Matrix {
-        static int index(lua_State* L) {
+        static int createRow(lua_State* L) {
             lua_createtable(L, 0, 0);
             
             // set row attribute
@@ -88,53 +93,46 @@ namespace LuaScripting {
 
         static int show(lua_State* L) {
             LEDHat::Instance().show();
-            return 0;
+            return lua_yield(L, 0);
         }
     };
 
-    int lua_print(lua_State* L) {
-        int nargs = lua_gettop(L);
 
-        for( auto i = 1; i <= nargs; ++i ) {
+    namespace Proxy {
+        int lua_print(lua_State* L) {
+            int nargs = lua_gettop(L);
 
-            IO::write( lua_tostring(L, i) );
-            IO::write(" ");
+            for( auto i = 1; i <= nargs; ++i ) {
+
+                IO::write( lua_tostring(L, i) );
+                IO::write(" ");
+            }
+
+            IO::write( "\n" );
+            return 0;
         }
 
-        IO::write( "\n" );
-        return 1;
-    }
-
-    int lua_panic(lua_State* L) {
-        IO::write("Lua error");
-        return 0;
-    }
-
-    int lua_millis(lua_State* L) {
-        lua_pushnumber(L, millis());
-        return 1;
+        int lua_millis(lua_State* L) {
+            lua_pushnumber(L, millis());
+            return 1;
+        }
     }
 
     void init() {
         L = luaL_newstate();
         luaL_openlibs(L);
 
-        lua_atpanic(L, lua_panic);
-
-        lua_pushcfunction(L, lua_print);
-        lua_setglobal(L, "print");
+        lua_register(L, "print", Proxy::lua_print);
+        lua_register(L, "millis", Proxy::lua_millis);
 
         lua_createtable(L, 0, 0);
         lua_pushcfunction(L, Matrix::show);
         lua_setfield(L, -2, "show");
 
-        lua_pushcfunction(L, lua_millis);
-        lua_setfield(L, -2, "millis");
-
         // create a raw object for every led matrix row
         for( auto i = 1; i <= 8; ++i ) {
             lua_pushnumber(L, i);
-            Matrix::index( L );
+            Matrix::createRow( L );
             lua_rawseti(L, 1, i);
             lua_pop(L, 1);
         }
@@ -143,16 +141,38 @@ namespace LuaScripting {
     }
 
     void execute(const std::string& code) {
-        if( luaL_loadstring(L, code.c_str()) == LUA_OK ) {
-            if( lua_pcall(L, 0, 0, 0) == LUA_OK ) {
-                // If it was executed successfuly we 
-                // remove the code from the stack
-                lua_pop(L, lua_gettop(L));
-            } else {
+        // Stop active thread
+        if( T != nullptr ) {
+            lua_pop(L, 1); // Pop the thread reference from lua main stack
+            T = nullptr; // no active thread at the moment
+        }
+
+        // Create new thread
+        T = lua_newthread(L);
+
+        luaL_loadstring(T, code.c_str()) == LUA_OK;
+    }
+
+    void resume() {
+        if( T == nullptr ) {
+            return;
+        }
+
+        int nres;
+        auto status = lua_resume(T, NULL, 0, &nres );
+        switch( status ) {
+            case LUA_YIELD:
+                return;
+
+            default: // for errors
                 IO::write( "Error: " );
-                IO::write( lua_tolstring(L, -1, NULL) );
+                IO::write( lua_tolstring(T, -1, NULL) );
                 IO::write('\n');
-            }
+                [[fallthrough]]
+
+            case LUA_OK:
+                lua_pop(L, 1); // Pop the thread reference from lua main stack
+                T = nullptr; // no active thread at the moment
         }
     }
 

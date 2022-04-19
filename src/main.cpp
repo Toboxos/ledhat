@@ -149,9 +149,10 @@ void setup() {
     LuaScripting::init();
 }
 
-std::string cmdBuffer;
 
-void loop() {
+void handleIO() {
+    static std::string cmdBuffer;
+
     while( IO::available() ) {
         char c = IO::read();
 
@@ -165,4 +166,10 @@ void loop() {
            cmdBuffer += c;
         }
     }
+
+}
+
+void loop() {
+    handleIO();
+    LuaScripting::resume();
 }
