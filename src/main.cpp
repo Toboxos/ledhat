@@ -26,7 +26,7 @@ void uploadFile(const std::string& filename) {
 
 void closeFile(const std::string& _) {
     file.close();
-    IO::write("Filed closed!");
+    IO::write("Filed closed!\n");
 }
 
 void loadFile(const std::string& filename) {
@@ -78,19 +78,47 @@ void setup() {
 
 
 void handleIO() {
-    static std::string cmdBuffer;
+    static std::string ioBuffer;
 
     while( IO::available() ) {
-        char c = IO::read();
+        int i = IO::read();
+        if( i == -1 ) {
+            continue;
+        }
 
-        if( c == '\n' ) {
-            if( !cmdParser.parseCommand( cmdBuffer ) && file ) {
-                file.print( cmdBuffer.c_str() );
-                file.print("\n");
-            }
-            cmdBuffer = "";
-        } else if( c != '\r' ) {
-           cmdBuffer += c;
+        char c = (char) i;
+        IO::write( c );
+
+        switch( c )  {
+            case '\r':
+                break;
+
+            case '\b':
+                ioBuffer.pop_back();
+                break;
+
+            case '\n':
+                if( ioBuffer.size() > 0 && ioBuffer[0] == '/' ) { // Command
+                    if( cmdParser.parseCommand( ioBuffer ) ) {
+                        ioBuffer.clear();
+                        break;
+                    }
+                }
+
+                if( file ) { // File Upload
+                    file.print( ioBuffer.c_str() );
+                    file.print('\n');
+                    ioBuffer.clear();
+                    break;
+                }
+
+
+                LuaScripting::sendLine(ioBuffer);
+                ioBuffer.clear();
+                break;
+
+            default:
+                ioBuffer += c;
         }
     }
 

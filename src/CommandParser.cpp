@@ -8,19 +8,18 @@ bool CommandParser::parseCommand(const std::string& text) {
 
     auto commandEnd = text.find(' ', 1);
     if( commandEnd == std::string::npos ) {
-        callHandler( text.substr(1), "" );
-        return true;
+        return callHandler( text.substr(1), "" );
     }
 
-    callHandler(  text.substr(1, commandEnd - 1),  text.substr( commandEnd + 1 ) );
-    return true;
+    return callHandler(  text.substr(1, commandEnd - 1),  text.substr( commandEnd + 1 ) );
 }
 
-void CommandParser::callHandler(const std::string& command, const std::string& arg) {
+bool CommandParser::callHandler(const std::string& command, const std::string& arg) {
     auto handler = _handlers.find( command );
     if( handler == _handlers.end() ) {
-        return;
+        return false;
     }
 
     handler->second( arg );
+    return true;
 }

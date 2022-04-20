@@ -29,7 +29,7 @@ public:
     void addCommandHandler(const std::string& command, const CommandHandler& handler) { _handlers.insert( {command, handler} ); }
 
 private:
-    void callHandler(const std::string& command, const std::string& arg);
+    bool callHandler(const std::string& command, const std::string& arg);
 
     /**
      * Map with relation of command the corresponding handler

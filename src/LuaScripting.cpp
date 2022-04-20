@@ -21,6 +21,12 @@ namespace LuaScripting {
      */
     static lua_State* T = nullptr;
 
+    /**
+     * Buffer for data received from the serial connection
+     */
+    std::string dataBuffer;
+
+
     /* Proxy functions calls from lua to the LEDHat */
     namespace LEDHatProxy {
 
@@ -200,6 +206,13 @@ namespace LuaScripting {
             lua_pushnumber(L, millis());
             return 1;
         }
+    
+        int readLine(lua_State* L) {
+            lua_pushstring(L, dataBuffer.c_str() );
+            dataBuffer.clear();
+
+            return lua_yield(L, 1);
+        }
     }
 
     void init() {
@@ -209,6 +222,7 @@ namespace LuaScripting {
         // registering proxy functions
         lua_register(L, "print", Proxy::lua_print);
         lua_register(L, "millis", Proxy::lua_millis);
+        lua_register(L, "readLine", Proxy::readLine );
 
         // Create LEDHat table for lua
         lua_createtable(L, 0, 0);
@@ -253,8 +267,15 @@ namespace LuaScripting {
             return;
         }
 
+
+        // if thread was yielded use the same stack to resume
+        auto top = 0;
+        if( lua_status(T) == LUA_YIELD ) {
+            top = lua_gettop( T );
+        }
+
         int nres;
-        auto status = lua_resume(T, NULL, 0, &nres );
+        auto status = lua_resume(T, NULL, top, &nres );
         switch( status ) {
             case LUA_YIELD:
                 return;
@@ -269,6 +290,10 @@ namespace LuaScripting {
                 lua_pop(L, 1); // Pop the thread reference from lua main stack
                 T = nullptr; // no active thread at the moment
         }
+    }
+
+    void sendLine(const std::string& line) {
+        dataBuffer = line;
     }
 
 }
