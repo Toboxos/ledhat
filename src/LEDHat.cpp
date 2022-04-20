@@ -9,7 +9,6 @@ LEDHat &LEDHat::Instance()
 void LEDHat::setup()
 {
     FastLED.addLeds<NEOPIXEL, PIN>(_ledBuffer, NUM_LEDS);
-    _colorProvider = [](unsigned int, unsigned int) -> CRGB { return CRGB(10, 0, 0); }; // Default color provider will return red
 }
 
 void LEDHat::indexToCoordinate(unsigned int idx, unsigned int &row, unsigned int &col)
@@ -46,7 +45,7 @@ void LEDHat::clear()
     }
 }
 
-void LEDHat::drawCharacter(const Character &c, int row, int col, int maxWrapAround /*= 0*/, bool clear /*= true*/)
+void LEDHat::drawCharacter(const Character &c, int row, int col, CRGB color, int maxWrapAround /*= 0*/)
 {
     for (auto x = 0; x < c.width; ++x)
     {
@@ -69,17 +68,13 @@ void LEDHat::drawCharacter(const Character &c, int row, int col, int maxWrapArou
 
             if (c.data[y * c.width + x] - '0')
             {
-                _ledBuffer[idx] = _colorProvider(row + y, fixedCol);
-            }
-            else if( clear )
-            {
-                _ledBuffer[idx] = CRGB(0, 0, 0);
+                _ledBuffer[idx] = color;
             }
         }
     }
 }
 
-void LEDHat::drawText(const char *text, int offsetX /*= 0*/, int offsetY /*= 0*/, bool allowWrapAround /*= true*/, bool clear /*= true*/)
+void LEDHat::drawText(const char *text, CRGB color, int offsetX /*= 0*/, int offsetY /*= 0*/, bool allowWrapAround /*= true*/)
 {
     const auto startPos = offsetY;
 
@@ -94,42 +89,14 @@ void LEDHat::drawText(const char *text, int offsetX /*= 0*/, int offsetY /*= 0*/
 
         if (allowWrapAround)
         {
-            drawCharacter(c, offsetY, offsetX, startPos - 1, clear); // Wrap around is allowed until 1 column before start of first character
+            drawCharacter(c, offsetY, offsetX, color, startPos - 1); // Wrap around is allowed until 1 column before start of first character
         }
         else
         {
-            drawCharacter(c, offsetY, offsetX, 0, clear); // No wrap around is allowed
+            drawCharacter(c, offsetY, offsetX, color, 0); // No wrap around is allowed
         }
 
         offsetX += c.width;
-    }
-}
-
-void LEDHat::scrollText(const char *text, unsigned int duration)
-{
-    const auto len = strlen(text);
-
-    // Compute the boundary of text when printed
-    auto stringDisplaySize = 0;
-    for (auto i = 0; i < len; ++i)
-    {
-        Character c;
-        if (!getCharacter(text[i], c))
-        {
-            continue;
-        }
-
-        stringDisplaySize += c.width;
-    }
-
-    // Start printing the text at last column without wrap around.
-    // Scroll text in from the right and out to the left
-    for (int i = COLS; i >= -stringDisplaySize; --i)
-    {
-        clear();
-        drawText(text, i, 1, false);
-        FastLED.show();
-        delay(duration);
     }
 }
 

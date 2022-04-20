@@ -24,6 +24,71 @@ namespace LuaScripting {
     /* Proxy functions calls from lua to the LEDHat */
     namespace LEDHatProxy {
 
+        static void stack_dump(lua_State* L, const char* stackname) {
+            int i;
+            int top = lua_gettop(L);
+            printf("--------------- %s STACK ---------------\n", stackname);
+            for (i = top; i >= 1; i--) {
+                int t = lua_type(L, i);
+                printf("[%2d - %8s] : ", i, lua_typename(L, t));
+                switch (t) {
+                case LUA_TSTRING:
+                    printf("%s", lua_tostring(L, i));
+                    break;
+                case LUA_TBOOLEAN:
+                    printf(lua_toboolean(L, i) ? "true" : "false");
+                    break;
+                case LUA_TNUMBER:
+                    printf("%g", lua_tonumber(L, i));
+                    break;
+                case LUA_TNIL:
+                    printf("nil");
+                    break;
+                case LUA_TNONE:
+                    printf("none");
+                    break;
+                case LUA_TFUNCTION:
+                    printf("<function %p>", lua_topointer(L, i));
+                    break;
+                case LUA_TTABLE:
+                    printf("<table %p>", lua_topointer(L, i));
+                    break;
+                case LUA_TTHREAD:
+                    printf("<thread %p>", lua_topointer(L, i));
+                    break;
+                case LUA_TUSERDATA:
+                    printf("<userdata %p>", lua_topointer(L, i));
+                    break;
+                case LUA_TLIGHTUSERDATA:
+                    printf("<lightuserdata %p>", lua_topointer(L, i));
+                    break;
+                default:
+                    printf("unknown %s", lua_typename(L, t));
+                    break;
+                }
+                printf("\n");
+            }
+            printf("--------------- %s STACK ---------------\n", stackname);
+        }
+
+        namespace Helpers {
+            CRGB lua_tocolor(lua_State* L, int idx) {
+                lua_pushvalue(L, idx); // push table to top of stack
+
+                lua_rawgeti(L, -1, 1); // r     -3
+                lua_rawgeti(L, -2, 2); // g     -2
+                lua_rawgeti(L, -3, 3); // b     -1
+
+                lua_Integer r = luaL_checkinteger(L, -3);
+                lua_Integer g = luaL_checkinteger(L, -2);
+                lua_Integer b = luaL_checkinteger(L, -1);
+
+                lua_pop(L, 4); // pop color values + table
+
+                return CRGB(r, g, b);
+            }
+        }
+
         int getLED(lua_State* L) {
             // get col from 2nd function argument
             const auto col = luaL_checkinteger(L, 2);
@@ -105,12 +170,12 @@ namespace LuaScripting {
 
         int drawText(lua_State* L) {
             auto text = luaL_checkstring(L, 1); // 1. arg = text
-            auto offsetX = luaL_checkinteger(L, 2); // 2. arg = offsetX
-            auto offsetY = luaL_checkinteger(L, 3); // 3. arg = offsetY
-            auto wrapArround = lua_toboolean(L, 4); // 4.arg = wrapArround
-            auto clear = lua_toboolean(L, 5); // 5.arg = clear
+            auto color = Helpers::lua_tocolor(L, 2); // 2. arg = color
+            auto offsetX = luaL_checkinteger(L, 3); // 3. arg = offsetX
+            auto offsetY = luaL_checkinteger(L, 4); // 4. arg = offsetY
+            auto wrapArround = lua_toboolean(L, 5); // 5.arg = wrapArround
 
-            LEDHat::Instance().drawText(text, offsetX, offsetY, wrapArround, clear);
+            LEDHat::Instance().drawText(text, color, offsetX, offsetY, wrapArround);
             return 0;
         }
     }

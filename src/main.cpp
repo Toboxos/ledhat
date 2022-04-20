@@ -11,74 +11,6 @@
 File file;
 CommandParser cmdParser;
 
-CRGB gColor(0, 5, 0);
-int gScrollSpeed = 40;
-
-
-/**
- * Callback for providing the pixel color to the LEDHat
- */
-CRGB color(unsigned int, unsigned int) {
-    return gColor;
-}
-
-/**
- * Showing text when /text command is used
- */
-void showText(const std::string& text) {
-    LEDHat::Instance().scrollText( text.c_str(), gScrollSpeed );
-}
-
-/**
- * Sets the speed how fast the text is moving when showText() is called
- */
-void setSpeed(const std::string& speed) {
-    auto fromChar = [](char c) -> unsigned int {
-        c = std::tolower( c );
-
-        if( c >= '0' && c <= '9' ) {
-            return c - '0';
-        }
-
-        return 0;
-    };
-
-    gScrollSpeed = 0;
-    for( auto& c : speed ) {
-        gScrollSpeed *= 10;
-        gScrollSpeed += fromChar(c);
-    }
-}
-
-/**
- * Sets the color in which the text is drawn
- *
- * @param color Color as hex string (e.g. 02AB3F)
- */
-void setColor(const std::string& color) {
-    if( color.size() != 6 ) {
-        return;
-    }
-
-    auto fromHex = [](char c) -> unsigned int {
-        c = std::tolower( c );
-
-        if( c >= '0' && c <= '9') {
-            return c - '0';
-        }
-
-        if( c >= 'a' && c <= 'f' ) {
-            return c - 'a';
-        }
-
-        return 0;
-    };
-
-    gColor.red = (fromHex(color[0]) << 16) + fromHex(color[1]);
-    gColor.green = (fromHex(color[2]) << 16) + fromHex(color[3]);
-    gColor.blue = (fromHex(color[4]) << 16) + fromHex(color[5]);
-}
-
 void execute(const std::string& code) {
     LuaScripting::execute( code );
 }
@@ -132,14 +64,9 @@ void dumpFile(const std::string& filename) {
 
 void setup() {
     IO::init();
-    LEDHat::Instance().setup();
-    LEDHat::Instance().setColorProvider( color );
-
     SPIFFS.begin( true );
+    LEDHat::Instance().setup();
 
-    cmdParser.addCommandHandler( "text", showText );
-    cmdParser.addCommandHandler( "color", setColor );
-    cmdParser.addCommandHandler( "speed", setSpeed );
     cmdParser.addCommandHandler( "execute", execute );
     cmdParser.addCommandHandler( "upload", uploadFile );
     cmdParser.addCommandHandler( "close", closeFile );

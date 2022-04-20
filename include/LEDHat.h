@@ -7,8 +7,6 @@
 class LEDHat
 {
 public:
-    using ColorProvider = std::function<CRGB(unsigned int row, unsigned int col)>;
-
     /**
      * Singleton instance function
      *
@@ -25,13 +23,6 @@ public:
      * Clears the the led matrix
      */
     void clear();
-
-    /**
-     * Sets a color provider
-     *
-     * A color provider gets the row and column of a pixel which is drawn and returns the color of the pixel
-     */
-    void setColorProvider( const ColorProvider& colorProvider ) { _colorProvider = colorProvider; }
 
     /**
      * Prints the given character at given position. Wrap around automatically.
@@ -59,29 +50,21 @@ public:
      * @param[in] c Character to print
      * @param[in] row Row where to start printing character
      * @param[in] col Column where to start printing character
+     * @param[in] color The color which the character pixels will have
      * @param[in] maxWrapAround Maximum column until which a character is allowed to be printed after wrap around
-     * @param[in] clear Defines wether a pixel should be cleared or current values should be kept when a character is drawn
      */
-    void drawCharacter(const Character &c, int row, int col, int maxWrapAround = 0, bool clear = true);
+    void drawCharacter(const Character &c, int row, int col, CRGB color, int maxWrapAround = 0);
 
     /**
      * Draws the given text onto the led buffer on given position. (does not flush the leds)
      *
      * @param[in] text The text to be drawn
+     * @param[in] color The color in which the text should be drawn
      * @param[in] offsetX Start colum position of the text
      * @param[in] offsetY Start row position of the text
      * @param[in] allowWrapAround Defines if a wrap around is allowed
-     * @param[in] clear Defines wether a pixel should be cleared or current values should be kept when a character is drawn
      */
-    void drawText(const char *text, int offsetX = 0, int offsetY = 0, bool allowWrapAround = true, bool clear = true);
-
-    /**
-     * Scrolls a text around the led matrix. (flushed the leds. blocks)
-     *
-     * @param[in] text
-     * @param[in] duration Duration in ms between each scroll step
-     */
-    void scrollText(const char *text, unsigned int duration);
+    void drawText(const char *text, CRGB color, int offsetX = 0, int offsetY = 0, bool allowWrapAround = true);
 
     /**
      * Sets the color of given pixel
@@ -125,11 +108,6 @@ private:
      * @return Index in the linear led buffer
      */
     int coordinateToIndex(int row, int col);
-
-    /**
-     * Callback providing the color for a pixel
-     */
-    ColorProvider _colorProvider;
 
     /**
      * Total number of leds of the led matrix
