@@ -99,6 +99,20 @@ namespace LuaScripting {
             return lua_yield(L, 0);
         }
 
+        int clear(lua_State* L) {
+            LEDHat::Instance().clear();
+        }
+
+        int drawText(lua_State* L) {
+            auto text = luaL_checkstring(L, 1); // 1. arg = text
+            auto offsetX = luaL_checkinteger(L, 2); // 2. arg = offsetX
+            auto offsetY = luaL_checkinteger(L, 3); // 3. arg = offsetY
+            auto wrapArround = lua_toboolean(L, 4); // 4.arg = wrapArround
+            auto clear = lua_toboolean(L, 5); // 5.arg = clear
+
+            LEDHat::Instance().drawText(text, offsetX, offsetY, wrapArround, clear);
+            return 0;
+        }
     }
 
 
@@ -138,12 +152,20 @@ namespace LuaScripting {
             lua_pushcfunction(L, LEDHatProxy::show);
             lua_setfield(L, -2, "show");
 
+            // registering clear function
+            lua_pushcfunction(L, LEDHatProxy::clear);
+            lua_setfield(L, -2, "clear");
+
+            // registering drawText function
+            lua_pushcfunction(L, LEDHatProxy::drawText);
+            lua_setfield(L, -2, "drawText");
+
             // create a raw object for every led matrix row
             for( auto i = 1; i <= 8; ++i ) {
                 LEDHatProxy::createRow( L, i );
-                lua_rawseti(L, 1, i);
-                lua_pop(L, 1);
+                lua_rawseti(L, -2, i);
             }
+
         }
         lua_setglobal(L, "LEDHat");
     }

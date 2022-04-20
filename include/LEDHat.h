@@ -60,8 +60,9 @@ public:
      * @param[in] row Row where to start printing character
      * @param[in] col Column where to start printing character
      * @param[in] maxWrapAround Maximum column until which a character is allowed to be printed after wrap around
+     * @param[in] clear Defines wether a pixel should be cleared or current values should be kept when a character is drawn
      */
-    void drawCharacter(const Character &c, int row, int col, int maxWrapAround = 0);
+    void drawCharacter(const Character &c, int row, int col, int maxWrapAround = 0, bool clear = true);
 
     /**
      * Draws the given text onto the led buffer on given position. (does not flush the leds)
@@ -70,8 +71,9 @@ public:
      * @param[in] offsetX Start colum position of the text
      * @param[in] offsetY Start row position of the text
      * @param[in] allowWrapAround Defines if a wrap around is allowed
+     * @param[in] clear Defines wether a pixel should be cleared or current values should be kept when a character is drawn
      */
-    void drawText(const char *text, int offsetX = 0, int offsetY = 0, bool allowWrapAround = true);
+    void drawText(const char *text, int offsetX = 0, int offsetY = 0, bool allowWrapAround = true, bool clear = true);
 
     /**
      * Scrolls a text around the led matrix. (flushed the leds. blocks)

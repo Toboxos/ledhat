@@ -46,7 +46,7 @@ void LEDHat::clear()
     }
 }
 
-void LEDHat::drawCharacter(const Character &c, int row, int col, int maxWrapAround /*= 0*/)
+void LEDHat::drawCharacter(const Character &c, int row, int col, int maxWrapAround /*= 0*/, bool clear /*= true*/)
 {
     for (auto x = 0; x < c.width; ++x)
     {
@@ -71,7 +71,7 @@ void LEDHat::drawCharacter(const Character &c, int row, int col, int maxWrapArou
             {
                 _ledBuffer[idx] = _colorProvider(row + y, fixedCol);
             }
-            else
+            else if( clear )
             {
                 _ledBuffer[idx] = CRGB(0, 0, 0);
             }
@@ -79,7 +79,7 @@ void LEDHat::drawCharacter(const Character &c, int row, int col, int maxWrapArou
     }
 }
 
-void LEDHat::drawText(const char *text, int offsetX /*= 0*/, int offsetY /*= 0*/, bool allowWrapAround /*= true*/)
+void LEDHat::drawText(const char *text, int offsetX /*= 0*/, int offsetY /*= 0*/, bool allowWrapAround /*= true*/, bool clear /*= true*/)
 {
     const auto startPos = offsetY;
 
@@ -94,11 +94,11 @@ void LEDHat::drawText(const char *text, int offsetX /*= 0*/, int offsetY /*= 0*/
 
         if (allowWrapAround)
         {
-            drawCharacter(c, offsetY, offsetX, startPos - 1); // Wrap around is allowed until 1 column before start of first character
+            drawCharacter(c, offsetY, offsetX, startPos - 1, clear); // Wrap around is allowed until 1 column before start of first character
         }
         else
         {
-            drawCharacter(c, offsetY, offsetX, 0); // No wrap around is allowed
+            drawCharacter(c, offsetY, offsetX, 0, clear); // No wrap around is allowed
         }
 
         offsetX += c.width;
