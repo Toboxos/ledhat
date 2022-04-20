@@ -21,10 +21,14 @@ namespace LuaScripting {
      */
     static lua_State* T = nullptr;
 
-    struct Row {
-        static int get(lua_State* L) {
+    /* Proxy functions calls from lua to the LEDHat */
+    namespace LEDHatProxy {
+
+        int getLED(lua_State* L) {
+            // get col from 2nd function argument
             const auto col = luaL_checkinteger(L, 2);
-        
+
+            // get the row from table (1st argument) field 'row'
             lua_getfield(L, 1, "row");
             lua_Integer row = luaL_checkinteger(L, -1);
             lua_pop(L, 1);
@@ -44,15 +48,17 @@ namespace LuaScripting {
             return 1;
         }
 
-        static int set(lua_State* L) {
+        int setLED(lua_State* L) {
+            // get col from 2nd function argument
             const auto col = luaL_checkinteger(L, 2);
-        
+
+            // get the row from table (1st argument) field 'row'
             lua_getfield(L, 1, "row");
             lua_Integer row = luaL_checkinteger(L, -1);
             lua_pop(L, 1);
 
             lua_rawgeti(L, 3, 1); // r  -3
-            lua_rawgeti(L, 3, 2); // g  -2 
+            lua_rawgeti(L, 3, 2); // g  -2
             lua_rawgeti(L, 3, 3); // b  -1
 
             lua_Integer r = luaL_checkinteger(L, -3);
@@ -64,25 +70,22 @@ namespace LuaScripting {
             LEDHat::Instance().setPixel(row - 1, col - 1, CRGB(r, g, b) );
             return 0;
         }
-    };
 
-    struct Matrix {
-        static int createRow(lua_State* L) {
+        int createRow(lua_State* L, int row) {
+            // table for the row
             lua_createtable(L, 0, 0);
-            
-            // set row attribute
-            lua_Number row = luaL_checknumber(L, 2);
 
+            // Adding the row as an field
             lua_pushnumber(L, row);
             lua_setfield(L, -2, "row");
 
             // set metatable
             lua_createtable(L, 0, 0);
 
-            lua_pushcfunction(L, Row::get);
+            lua_pushcfunction(L, getLED);
             lua_setfield(L, -2, "__index");
 
-            lua_pushcfunction(L, Row::set);
+            lua_pushcfunction(L, setLED);
             lua_setfield(L, -2, "__newindex");
 
             lua_setmetatable(L, -2);
@@ -91,13 +94,15 @@ namespace LuaScripting {
             return 1;
         }
 
-        static int show(lua_State* L) {
+        int show(lua_State* L) {
             LEDHat::Instance().show();
             return lua_yield(L, 0);
         }
-    };
+
+    }
 
 
+    /* Proxy functions from lua to Arduino functions */
     namespace Proxy {
         int lua_print(lua_State* L) {
             int nargs = lua_gettop(L);
@@ -122,21 +127,24 @@ namespace LuaScripting {
         L = luaL_newstate();
         luaL_openlibs(L);
 
+        // registering proxy functions
         lua_register(L, "print", Proxy::lua_print);
         lua_register(L, "millis", Proxy::lua_millis);
 
+        // Create LEDHat table for lua
         lua_createtable(L, 0, 0);
-        lua_pushcfunction(L, Matrix::show);
-        lua_setfield(L, -2, "show");
+        {
+            // registering show function
+            lua_pushcfunction(L, LEDHatProxy::show);
+            lua_setfield(L, -2, "show");
 
-        // create a raw object for every led matrix row
-        for( auto i = 1; i <= 8; ++i ) {
-            lua_pushnumber(L, i);
-            Matrix::createRow( L );
-            lua_rawseti(L, 1, i);
-            lua_pop(L, 1);
+            // create a raw object for every led matrix row
+            for( auto i = 1; i <= 8; ++i ) {
+                LEDHatProxy::createRow( L, i );
+                lua_rawseti(L, 1, i);
+                lua_pop(L, 1);
+            }
         }
-
         lua_setglobal(L, "LEDHat");
     }
 
