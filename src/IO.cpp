@@ -8,6 +8,7 @@ namespace IO {
 
     void init() {
         espBT.begin( "LED HAT" );
+        espBT.setPin("2259");
         Serial.begin( 115200 );
     }
 

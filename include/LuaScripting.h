@@ -23,4 +23,9 @@ namespace LuaScripting {
      * The current active lua thread will run until the next yield
      */
     void resume();
+
+    /**
+     * Sends a line to the  
+     */
+    void sendLine(const std::string& data);
 }

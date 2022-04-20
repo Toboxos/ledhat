@@ -1,4 +1,5 @@
 #include "LEDHat.h"
+#include "IO.h"
 
 LEDHat &LEDHat::Instance()
 {
@@ -76,7 +77,7 @@ void LEDHat::drawCharacter(const Character &c, int row, int col, CRGB color, int
 
 void LEDHat::drawText(const char *text, CRGB color, int offsetX /*= 0*/, int offsetY /*= 0*/, bool allowWrapAround /*= true*/)
 {
-    const auto startPos = offsetY;
+    const auto startPos = offsetX;
 
     auto len = strlen(text);
     for (auto i = 0; i < len; ++i)
